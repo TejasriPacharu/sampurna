@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-
+import { Platform } from 'react-native';
 import { signupDelivery } from '../../api/authApi';
 import {
   InputField, FileUploadButton, PrimaryButton,
@@ -31,7 +31,7 @@ export default function DeliverySignupScreen({ navigation }) {
 
   // Expo returns { canceled: bool, assets: [...] }
   if (!result.canceled && result.assets?.length > 0) {
-    setProofFile(result.assets[0]);
+    setLicenseFile(result.assets[0]);
   }
 };
 
@@ -54,13 +54,21 @@ export default function DeliverySignupScreen({ navigation }) {
     data.append('phone',       phone);
     data.append('full_name',   full_name);
     data.append('address',     address);
-    if (form.platform_id) data.append('platform_id', form.platform_id);
-    data.append('license_upload', {
-      uri:  licenseFile.uri,
-      name: licenseFile.name,
-      type: licenseFile.type,
-    });
 
+    if(Platform.OS === 'web') {
+      const response = await fetch(licenseFile.uri);
+      const blob = await response.blob();
+      const file = new File([blob], licenseFile.name, {type:licenseFile.mimeType || blob.type});
+      data.append('license_upload', file);
+    }
+    else {
+        if (form.platform_id) data.append('platform_id', form.platform_id);
+        data.append('license_upload', {
+        uri:  licenseFile.uri,
+        name: licenseFile.name,
+        type: licenseFile.mimeType,
+      });
+    }
     setLoading(true);
     try {
       await signupDelivery(data);

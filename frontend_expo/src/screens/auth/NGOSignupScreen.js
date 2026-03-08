@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-
+import { Platform } from 'react-native';
 import { signupNGO } from '../../api/authApi';
 import {
   InputField, FileUploadButton, PrimaryButton,
@@ -55,12 +55,21 @@ export default function NGOSignupScreen({ navigation }) {
     data.append('ngo_name',       ngo_name);
     data.append('volunteer_name', volunteer_name);
     data.append('location',       location);
-    data.append('ngo_proof', {
+    if(Platform.OS === 'web') {
+      // On web, fetch the file URI and convert it to a Blob
+      const response = await fetch(proofFile.uri);
+      const blob = await response.blob();
+      const file = new File([blob], proofFile.name, {type: proofFile.mimeType || blob.type});
+      data.append('ngo_proof', file);
+    }
+    else {
+      // On native (iOS/Android), the { uri, name, type } object works fine
+      data.append('ngo_proof', {
       uri:  proofFile.uri,
       name: proofFile.name,
       type: proofFile.type,
-    });
-
+      });
+    }
     setLoading(true);
     try {
       await signupNGO(data);

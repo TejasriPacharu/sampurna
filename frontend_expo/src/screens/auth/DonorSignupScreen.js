@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-
+import { Platform } from 'react-native';
 import { signupDonor } from '../../api/authApi';
 import {
   InputField, FileUploadButton, PrimaryButton,
@@ -57,11 +57,20 @@ const pickFile = async () => {
     data.append('org_name',           org_name);
     data.append('responsible_person', responsible_person);
     data.append('location',           location);
-    data.append('fssai_proof', {
-      uri:  proofFile.uri,
-      name: proofFile.name,
-      type: proofFile.type,
-    });
+    if (Platform.OS === 'web') {
+      // On web, fetch the file URI and convert it to a Blob
+      const response = await fetch(proofFile.uri);
+      const blob = await response.blob();
+      const file = new File([blob], proofFile.name, { type: proofFile.mimeType || blob.type });
+      data.append('fssai_proof', file);
+    } else {
+      // On native (iOS/Android), the { uri, name, type } object works fine
+      data.append('fssai_proof', {
+        uri:  proofFile.uri,
+        name: proofFile.name,
+        type: proofFile.mimeType || proofFile.type,
+      });
+    }
 
     setLoading(true);
     try {
@@ -72,8 +81,13 @@ const pickFile = async () => {
         'Your donor account request has been sent to the admin for approval. You will be notified once approved.',
       );
     } catch (err) {
+      console.log('Full error:', JSON.stringify(err.response?.data, null, 2));
+      console.log('Status:', err.response?.status);
+      
       const msg = err.response?.data?.email?.[0]
         || err.response?.data?.non_field_errors?.[0]
+        || JSON.stringify(err.response?.data)  // ← add this as fallback
+        || err.message                          // ← and this
         || 'Signup failed. Please try again.';
       setError(msg);
     } finally {
