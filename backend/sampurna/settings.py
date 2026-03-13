@@ -27,6 +27,9 @@ INSTALLED_APPS = [
 
     # Sampurna apps
     'accounts',
+    'food',
+    'ratings',
+    'leaderboard',
 ]
 
 MIDDLEWARE = [

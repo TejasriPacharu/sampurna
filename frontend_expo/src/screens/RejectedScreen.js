@@ -1,171 +1,59 @@
 // src/screens/RejectedScreen.js
 
-import React from 'react';
-import {
-  View, Text, StyleSheet, SafeAreaView,
-  StatusBar, TouchableOpacity,
-} from 'react-native';
 import useAuthStore from '../store/authStore';
+import { T, PageScroll } from '../components/ui/ui';
 
 export default function RejectedScreen({ navigation }) {
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout();
     navigation.replace('RoleSelection');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+    <PageScroll>
+      <div style={{ minHeight:'90vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'0 8px' }}>
 
-      <View style={styles.content}>
+        <div style={{ fontSize:64, marginBottom:24 }}>🚫</div>
 
-        {/* Icon */}
-        <View style={styles.iconBox}>
-          <Text style={styles.icon}>✕</Text>
-        </View>
+        <div style={{ fontSize:24, fontWeight:800, fontFamily: T.display, color:'#DC2626', marginBottom:12 }}>
+          Account Rejected
+        </div>
 
-        <Text style={styles.title}>Request Rejected</Text>
-        <Text style={styles.subtitle}>
-          Your account request was reviewed and could not be approved at this time.
-        </Text>
+        <div style={{ color: T.muted, fontSize:14, lineHeight:1.7, maxWidth:320, marginBottom:32 }}>
+          Unfortunately, your account application could not be approved at this time. This may be due to incomplete information or not meeting our verification requirements.
+        </div>
 
-        {/* Reason card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>What to do next</Text>
-          <View style={styles.stepRow}>
-            <Text style={styles.stepNum}>1</Text>
-            <Text style={styles.stepText}>Contact support for the rejection reason</Text>
-          </View>
-          <View style={styles.stepRow}>
-            <Text style={styles.stepNum}>2</Text>
-            <Text style={styles.stepText}>Re-apply with updated or clearer documents</Text>
-          </View>
-          <View style={styles.stepRow}>
-            <Text style={styles.stepNum}>3</Text>
-            <Text style={styles.stepText}>Ensure your proof documents are valid and legible</Text>
-          </View>
-        </View>
+        {/* Detail card */}
+        <div style={{ background:'#FFFFFF', border:'1px solid #FECACA', borderRadius:16, padding:'20px 24px', width:'100%', maxWidth:320, marginBottom:24 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #FEE2E2' }}>
+            <span style={{ color: T.muted, fontSize:13 }}>Name</span>
+            <span style={{ color: T.text, fontSize:13, fontWeight:600 }}>{user?.name}</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0' }}>
+            <span style={{ color: T.muted, fontSize:13 }}>Status</span>
+            <span style={{ color:'#DC2626', fontSize:13, fontWeight:700 }}>❌ Rejected</span>
+          </div>
+        </div>
 
-        {/* Support contact */}
-        <View style={styles.supportBox}>
-          <Text style={styles.supportLabel}>Need help?</Text>
-          <Text style={styles.supportEmail}>support@sampurna.in</Text>
-        </View>
+        {/* Help box */}
+        <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:12, padding:'14px 16px', width:'100%', maxWidth:320, marginBottom:32, textAlign:'left' }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#DC2626', marginBottom:8 }}>What can you do?</div>
+          {['Contact support at support@sampurna.org', 'Re-apply with complete and accurate information', 'Ensure your registration documents are valid'].map(t => (
+            <div key={t} style={{ fontSize:12, color:'#4B4842', padding:'4px 0', display:'flex', gap:8 }}>
+              <span style={{ color:'#DC2626' }}>•</span> {t}
+            </div>
+          ))}
+        </div>
 
-      </View>
-
-      {/* Footer */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>← Back to Home</Text>
-      </TouchableOpacity>
-
-    </SafeAreaView>
+        <button
+          onClick={handleLogout}
+          style={{ padding:'12px 32px', background:'transparent', border:'1px solid #FECACA', borderRadius:10, color:'#DC2626', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily: T.font }}
+        >
+          Back to Home
+        </button>
+      </div>
+    </PageScroll>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
-    paddingHorizontal: 28,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-  },
-  iconBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: '#EF444415',
-    borderWidth: 1,
-    borderColor: '#EF444440',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  icon: {
-    fontSize: 32,
-    color: '#EF4444',
-    fontWeight: '700',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#EF4444',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 280,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: '#141414',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#222',
-    padding: 20,
-    gap: 14,
-  },
-  cardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#AAA',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  stepNum: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#EF444420',
-    borderWidth: 1,
-    borderColor: '#EF444440',
-    color: '#EF4444',
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#888',
-    lineHeight: 20,
-  },
-  supportBox: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  supportLabel: {
-    fontSize: 12,
-    color: '#555',
-  },
-  supportEmail: {
-    fontSize: 14,
-    color: '#EF4444',
-    fontWeight: '600',
-  },
-  logoutBtn: {
-    paddingVertical: 24,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#555',
-    fontSize: 14,
-  },
-});

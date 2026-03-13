@@ -1,172 +1,108 @@
 // src/screens/auth/LoginScreen.js
 
-import React, { useState } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet,
-  SafeAreaView, StatusBar, TouchableOpacity,
-} from 'react-native';
-
+import { useState } from 'react';
 import useAuthStore from '../../store/authStore';
-import {
-  InputField, PrimaryButton, ErrorBanner,
-} from '../../components/ui/FormComponents';
+import { T, Input, PrimaryButton, ErrorBox, PageScroll } from '../../components/ui/ui';
 
 export default function LoginScreen({ navigation }) {
-  const [email,    setEmail]    = useState('');
+  const { login } = useAuthStore();
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading,  setLoading]  = useState(false);
-
-  const { login, error, clearError } = useAuthStore();
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) return;
-    clearError();
+    setError('');
     setLoading(true);
-
     try {
-      const data = await login(email, password);
-
-      // Route based on role + status
-      if (data.role === 'admin') {
-        navigation.replace('AdminDashboard');
-      } else if (data.status === 'pending') {
+      const account = await login(email.trim(), password);
+      // Route based on status ─────────────────────────────────────
+      if (account.status === 'pending') {
         navigation.replace('WaitingApproval');
-      } else if (data.status === 'rejected') {
+      } else if (account.status === 'rejected') {
         navigation.replace('Rejected');
-      } else if (data.status === 'approved') {
-        const routes = {
-          donor:    'DonorDashboard',
-          ngo:      'NGODashboard',
-          delivery: 'DeliveryDashboard',
-        };
-        navigation.replace(routes[data.role] || 'RoleSelection');
+      } else {
+        // approved → go to role dashboard
+        const dest =
+          account.role === 'donor'
+            ? 'DonorDashboard'
+            : account.role === 'ngo'
+            ? 'NGODashboard'
+            : account.role === 'admin'
+            ? 'AdminDashboard'
+            : 'DeliveryDashboard';
+
+        navigation.replace(dest);
       }
-    } catch {
-      // error is set in store
+    } catch (e) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <PageScroll>
+      {/* Header */}
+      <div style={{ paddingTop:60, paddingBottom:40, textAlign:'center' }}>
+        <div style={{ fontSize:40, fontWeight:800, fontFamily: T.display, color:'#16A34A', letterSpacing:'-1.5px' }}>sampurna</div>
+        <div style={{ color: T.muted, fontSize:14, marginTop:8 }}>Sign in to your account</div>
+      </div>
 
-        {/* Logo */}
-        <View style={styles.logoArea}>
-          <Text style={styles.logo}>sampurna</Text>
-          <Text style={styles.tagline}>rescue food. restore dignity.</Text>
-        </View>
+      <Input
+        label="Email"
+        type="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <Input
+        label="Password"
+        type="password"
+        placeholder="••••••••"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+      />
 
-        <Text style={styles.heading}>Welcome back</Text>
+      <ErrorBox message={error} />
 
-        <ErrorBanner message={error} />
+      <PrimaryButton
+        label={loading ? 'Signing in…' : 'Sign In'}
+        accent="#4ADE80"
+        onClick={handleLogin}
+        disabled={loading}
+      />
 
-        <InputField
-          label="Email Address"
-          placeholder="your@email.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
-        <InputField
-          label="Password"
-          placeholder="Your password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+      {/* Demo hint */}
+      <div style={{ marginTop:24, background:'#FFFFFF', border:'1px solid #E3E0D9', borderRadius:12, padding:16 }}>
+        <div style={{ fontSize:11, color: T.muted, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.5px' }}>Demo accounts (password: 1234)</div>
+        {[
+          ['arjun@donor.com',   '🌱 Donor (approved)'],
+          ['hope@ngo.com',      '🤝 NGO (approved)'],
+          ['ravi@delivery.com', '🚴 Delivery (approved)'],
+          ['green@ngo.com',     '🤝 NGO (pending)'],
+          ['bad@delivery.com',  '🚴 Delivery (rejected)'],
+        ].map(([em, label]) => (
+          <div
+            key={em}
+            onClick={() => { setEmail(em); setPassword('1234'); }}
+            style={{ padding:'6px 0', fontSize:12, color:'#4B4842', cursor:'pointer', borderBottom:'1px solid #F2F1EE', display:'flex', justifyContent:'space-between' }}
+          >
+            <span>{label}</span>
+            <span style={{ color:'#4B4842' }}>{em}</span>
+          </div>
+        ))}
+      </div>
 
-        <PrimaryButton
-          label="Sign In"
-          onPress={handleLogin}
-          loading={loading}
-          accent="#4ADE80"
-        />
-
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>new here?</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Role signup links */}
-        <View style={styles.signupLinks}>
-          {[
-            { label: '🏨 Donor',            screen: 'DonorSignup',    color: '#4ADE80' },
-            { label: '🤝 NGO',              screen: 'NGOSignup',      color: '#60A5FA' },
-            { label: '🚴 Delivery Partner', screen: 'DeliverySignup', color: '#FBBF24' },
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.screen}
-              style={[styles.signupLink, { borderColor: item.color + '33' }]}
-              onPress={() => navigation.navigate(item.screen)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.signupLinkText, { color: item.color }]}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-      </ScrollView>
-    </SafeAreaView>
+      <div style={{ textAlign:'center', marginTop:28, color: T.muted, fontSize:13 }}>
+        Don't have an account?{' '}
+        <span
+          onClick={() => navigation.navigate('RoleSelection')}
+          style={{ color:'#16A34A', cursor:'pointer', fontWeight:600 }}
+        >
+          Sign up
+        </span>
+      </div>
+    </PageScroll>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0A' },
-  scroll:    { paddingHorizontal: 24, paddingBottom: 40 },
-  logoArea:  { paddingTop: 48, paddingBottom: 36 },
-  logo: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#4ADE80',
-    letterSpacing: -1,
-  },
-  tagline: {
-    fontSize: 12,
-    color: '#555',
-    marginTop: 3,
-    letterSpacing: 0.5,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#E5E5E5',
-    marginBottom: 24,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 28,
-    gap: 10,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#222',
-  },
-  dividerText: {
-    color: '#555',
-    fontSize: 12,
-  },
-  signupLinks: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  signupLink: {
-    flex: 1,
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  signupLinkText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-});

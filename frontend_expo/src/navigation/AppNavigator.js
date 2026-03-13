@@ -74,7 +74,7 @@ export default function AppNavigator() {
         <Stack.Screen name="RoleSelection"     component={RoleSelectionScreen} />
         <Stack.Screen name="Login"             component={LoginScreen} />
         <Stack.Screen name="DonorSignup"       component={DonorSignupScreen} />
-        <Stack.Screen name="NGOSignup"         component={NGOSignupScreen} />
+        <Stack.Screen name="NgoSignup"         component={NGOSignupScreen} />
         <Stack.Screen name="DeliverySignup"    component={DeliverySignupScreen} />
 
         {/* ── Status ────────────────────── */}

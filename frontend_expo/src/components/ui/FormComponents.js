@@ -1,5 +1,6 @@
 // src/components/ui/FormComponents.js
 // Reusable, minimal form components shared across all signup screens
+// ── LIGHT THEME ─────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 import {
@@ -22,11 +23,11 @@ export function InputField({
         style={[
           styles.input,
           focused && styles.inputFocused,
-          error  && styles.inputError,
-          multiline && { height: 80, textAlignVertical: 'top' },
+          error   && styles.inputError,
+          multiline && { minHeight: 80, textAlignVertical: 'top' },
         ]}
         placeholder={placeholder}
-        placeholderTextColor="#555"
+        placeholderTextColor="#8C8880"
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -36,41 +37,53 @@ export function InputField({
         onBlur={() => setFocused(false)}
         autoCapitalize="none"
       />
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={styles.inlineError}>{error}</Text>}
     </View>
   );
 }
 
 // ── File Upload Button ───────────────────────────────────────────
-export function FileUploadButton({ label, fileName, onPress, accent = '#4ADE80' }) {
+export function FileUploadButton({ label, fileName, onPress, accent = '#16A34A' }) {
+  const hasFile = Boolean(fileName);
   return (
     <View style={styles.fieldWrapper}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TouchableOpacity
-        style={[styles.uploadBtn, { borderColor: accent + '55' }]}
+        style={[
+          styles.uploadBtn,
+          hasFile
+            ? { borderColor: accent, borderStyle: 'solid', backgroundColor: accent + '0D' }
+            : { borderColor: '#D6D2CA', borderStyle: 'dashed' },
+        ]}
         onPress={onPress}
-        activeOpacity={0.8}
+        activeOpacity={0.75}
       >
-        <Text style={{ fontSize: 18 }}>{fileName ? '📎' : '📁'}</Text>
-        <Text style={[styles.uploadText, fileName && { color: accent }]}>
-          {fileName || 'Tap to upload document'}
+        <Text style={{ fontSize: 18 }}>{hasFile ? '📎' : '📁'}</Text>
+        <Text style={[styles.uploadText, hasFile && { color: accent, fontWeight: '600' }]}
+              numberOfLines={1}>
+          {hasFile ? fileName : 'Tap to upload document'}
         </Text>
+        {hasFile && (
+          <View style={[styles.uploadBadge, { backgroundColor: accent + '15', borderColor: accent + '40' }]}>
+            <Text style={[styles.uploadBadgeText, { color: accent }]}>✓</Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
 }
 
 // ── Primary Button ───────────────────────────────────────────────
-export function PrimaryButton({ label, onPress, loading = false, accent = '#4ADE80' }) {
+export function PrimaryButton({ label, onPress, loading = false, accent = '#16A34A' }) {
   return (
     <TouchableOpacity
-      style={[styles.primaryBtn, { backgroundColor: accent }, loading && styles.btnDisabled]}
+      style={[styles.primaryBtn, { backgroundColor: loading ? accent + 'AA' : accent }]}
       onPress={onPress}
       activeOpacity={0.85}
       disabled={loading}
     >
       {loading
-        ? <ActivityIndicator color="#000" />
+        ? <ActivityIndicator color="#FFFFFF" />
         : <Text style={styles.primaryBtnText}>{label}</Text>
       }
     </TouchableOpacity>
@@ -78,7 +91,7 @@ export function PrimaryButton({ label, onPress, loading = false, accent = '#4ADE
 }
 
 // ── Screen Header ────────────────────────────────────────────────
-export function ScreenHeader({ title, subtitle, onBack, accent = '#4ADE80' }) {
+export function ScreenHeader({ title, subtitle, onBack, accent = '#16A34A' }) {
   return (
     <View style={styles.headerWrapper}>
       {onBack && (
@@ -86,7 +99,7 @@ export function ScreenHeader({ title, subtitle, onBack, accent = '#4ADE80' }) {
           <Text style={[styles.backArrow, { color: accent }]}>←</Text>
         </TouchableOpacity>
       )}
-      <Text style={[styles.screenTitle, { color: accent }]}>{title}</Text>
+      <Text style={[styles.screenTitle, { color: '#1C1A17' }]}>{title}</Text>
       {subtitle && <Text style={styles.screenSubtitle}>{subtitle}</Text>}
     </View>
   );
@@ -97,104 +110,155 @@ export function ErrorBanner({ message }) {
   if (!message) return null;
   return (
     <View style={styles.errorBanner}>
-      <Text style={styles.errorBannerText}>⚠ {message}</Text>
+      <Text style={styles.errorBannerIcon}>⚠️</Text>
+      <Text style={styles.errorBannerText}>{message}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ── Field wrapper ────────────────────────────────────────────
   fieldWrapper: {
     marginBottom: 14,
   },
   label: {
-    color: '#AAA',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#4B4842',
+    fontSize: 11,
+    fontWeight: '700',
     marginBottom: 6,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
+
+  // ── TextInput ────────────────────────────────────────────────
   input: {
-    backgroundColor: '#141414',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#E5E5E5',
-    fontSize: 15,
+    borderColor: '#D6D2CA',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    color: '#1C1A17',
+    fontSize: 14,
+    shadowColor: '#1C1A17',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   inputFocused: {
-    borderColor: '#4ADE8055',
-    backgroundColor: '#141414',
+    borderColor: '#2563EB',
+    shadowColor: '#2563EB',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputError: {
-    borderColor: '#EF444466',
+    borderColor: '#DC2626',
   },
-  errorText: {
-    color: '#EF4444',
+  inlineError: {
+    color: '#DC2626',
     fontSize: 11,
     marginTop: 4,
+    marginLeft: 2,
   },
+
+  // ── File upload ──────────────────────────────────────────────
   uploadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     gap: 10,
+    shadowColor: '#1C1A17',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   uploadText: {
-    color: '#555',
+    flex: 1,
+    color: '#8C8880',
     fontSize: 14,
   },
-  primaryBtn: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
+  uploadBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  btnDisabled: {
-    opacity: 0.6,
+  uploadBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // ── Primary button ───────────────────────────────────────────
+  primaryBtn: {
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    shadowColor: '#1C1A17',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   primaryBtnText: {
-    color: '#000',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
+
+  // ── Screen header ────────────────────────────────────────────
   headerWrapper: {
     paddingTop: 16,
     paddingBottom: 28,
   },
   backBtn: {
     marginBottom: 12,
+    alignSelf: 'flex-start',
   },
   backArrow: {
     fontSize: 24,
   },
   screenTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     letterSpacing: -0.5,
+    color: '#1C1A17',
   },
   screenSubtitle: {
-    color: '#666',
+    color: '#8C8880',
     fontSize: 13,
     marginTop: 4,
   },
+
+  // ── Error banner ─────────────────────────────────────────────
   errorBanner: {
-    backgroundColor: '#EF444415',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#EF444433',
+    borderColor: '#FECACA',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
   },
+  errorBannerIcon: {
+    fontSize: 14,
+    flexShrink: 0,
+  },
   errorBannerText: {
-    color: '#EF4444',
+    flex: 1,
+    color: '#DC2626',
     fontSize: 13,
+    lineHeight: 18,
   },
 });

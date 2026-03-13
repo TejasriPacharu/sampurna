@@ -194,3 +194,101 @@ class AdminStatsView(APIView):
             }
         stats['total_pending'] = User.objects.filter(status='pending').count()
         return Response(stats)
+
+
+# ─────────────────────────────────────────────
+# Auth: Get / Update own full profile
+# Returns name, phone, location for all roles
+# ─────────────────────────────────────────────
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request):
+        user = request.user
+        data = {
+            'user_id': user.id,
+            'email':   user.email,
+            'phone':   user.phone,
+            'role':    user.role,
+            'status':  user.status,
+        }
+
+        if user.role == 'donor' and hasattr(user, 'donor_profile'):
+            p = user.donor_profile
+            data.update({
+                'name':               p.org_name,
+                'org_name':           p.org_name,
+                'responsible_person': p.responsible_person,
+                'location':           p.location,
+                'address':            p.location,   # alias so frontend works with either key
+                'latitude':           p.latitude,
+                'longitude':          p.longitude,
+            })
+
+        elif user.role == 'ngo' and hasattr(user, 'ngo_profile'):
+            p = user.ngo_profile
+            data.update({
+                'name':           p.ngo_name,
+                'ngo_name':       p.ngo_name,
+                'volunteer_name': p.volunteer_name,
+                'location':       p.location,
+                'address':        p.location,
+                'latitude':       p.latitude,
+                'longitude':      p.longitude,
+            })
+
+        elif user.role == 'delivery' and hasattr(user, 'delivery_profile'):
+            p = user.delivery_profile
+            data.update({
+                'name':        p.full_name,
+                'full_name':   p.full_name,
+                'location':    p.address,
+                'address':     p.address,
+                'latitude':    p.latitude,
+                'longitude':   p.longitude,
+                'platform_id': p.platform_id,
+            })
+
+        return Response(data)
+
+    def patch(self, request):
+        user = request.user
+
+        # Update phone on User model if provided
+        if 'phone' in request.data:
+            user.phone = request.data['phone']
+            user.save(update_fields=['phone', 'updated_at'])
+
+        # Update role-specific profile fields
+        if user.role == 'donor' and hasattr(user, 'donor_profile'):
+            p = user.donor_profile
+            for field in ['org_name', 'responsible_person', 'location']:
+                if field in request.data:
+                    setattr(p, field, request.data[field])
+            for coord in ['latitude', 'longitude']:
+                if coord in request.data:
+                    setattr(p, coord, request.data[coord] or None)
+            p.save()
+
+        elif user.role == 'ngo' and hasattr(user, 'ngo_profile'):
+            p = user.ngo_profile
+            for field in ['ngo_name', 'volunteer_name', 'location']:
+                if field in request.data:
+                    setattr(p, field, request.data[field])
+            for coord in ['latitude', 'longitude']:
+                if coord in request.data:
+                    setattr(p, coord, request.data[coord] or None)
+            p.save()
+
+        elif user.role == 'delivery' and hasattr(user, 'delivery_profile'):
+            p = user.delivery_profile
+            for field in ['full_name', 'address', 'platform_id']:
+                if field in request.data:
+                    setattr(p, field, request.data[field])
+            for coord in ['latitude', 'longitude']:
+                if coord in request.data:
+                    setattr(p, coord, request.data[coord] or None)
+            p.save()
+
+        return Response({'detail': 'Profile updated successfully.'})

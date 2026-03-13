@@ -1,220 +1,81 @@
-// src/screens/WaitingApprovalScreen.js — UPDATED
-
-import React, { useEffect, useRef } from 'react';
-import {
-  View, Text, StyleSheet, SafeAreaView,
-  StatusBar, TouchableOpacity, Animated,
-} from 'react-native';
+// src/screens/WaitingApprovalScreen.js
 
 import useAuthStore from '../store/authStore';
-
-const ROLE_CONFIG = {
-  donor: {
-    label:   'Donor',
-    icon:    '🏨',
-    color:   '#4ADE80',
-    message: 'Your organisation details and FSSAI proof are being reviewed.',
-  },
-  ngo: {
-    label:   'NGO',
-    icon:    '🤝',
-    color:   '#60A5FA',
-    message: 'Your NGO registration certificate is being verified.',
-  },
-  delivery: {
-    label:   'Delivery Partner',
-    icon:    '🚴',
-    color:   '#FBBF24',
-    message: 'Your driving license and details are being reviewed.',
-  },
-};
+import { T, PageScroll } from '../components/ui/ui';
 
 export default function WaitingApprovalScreen({ navigation }) {
-  const { user, refreshStatus, logout } = useAuthStore();
-  const pulse = useRef(new Animated.Value(0.4)).current;
-
-  // ── Pulsing animation ──────────────────────────────────────────
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1,   duration: 1200, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  // ── Poll status every 10 seconds ───────────────────────────────
-  useEffect(() => {
-    const poll = setInterval(async () => {
-      const status = await refreshStatus();
-      if (status === 'approved') {
-        clearInterval(poll);
-        const routes = { donor: 'DonorDashboard', ngo: 'NGODashboard', delivery: 'DeliveryDashboard' };
-        navigation.replace(routes[user?.role] || 'Login');
-      } else if (status === 'rejected') {
-        clearInterval(poll);
-        navigation.replace('Rejected');
-      }
-    }, 10000);
-    return () => clearInterval(poll);
-  }, [user]);
+  const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
-    await logout();
+    logout();
     navigation.replace('RoleSelection');
   };
 
-  const ROLE_LABELS = { donor: 'Donor', ngo: 'NGO', delivery: 'Delivery Partner' };
+  const roleColor   = user?.role === 'ngo' ? '#2563EB' : '#D97706';
+  const roleLabel   = user?.role === 'ngo' ? 'NGO' : 'Delivery Partner';
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+    <PageScroll>
+      <div style={{ minHeight:'90vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'0 8px' }}>
 
-      <View style={styles.content}>
-
-        {/* Animated indicator */}
-        <View style={styles.iconArea}>
-          <Animated.View style={[styles.outerRing, { opacity: pulse }]} />
-          <View style={styles.innerDot}>
-            <Text style={styles.clockIcon}>⏳</Text>
-          </View>
-        </View>
-
-        <Text style={styles.title}>Under Review</Text>
-        <Text style={styles.subtitle}>
-          Your <Text style={styles.roleHighlight}>{ROLE_LABELS[user?.role]}</Text> request
-          is pending admin verification.
-        </Text>
-
-        {/* Status steps */}
-        <View style={styles.steps}>
-          {[
-            { label: 'Request submitted',     done: true  },
-            { label: 'Admin reviewing details', done: false },
-            { label: 'Account activated',     done: false },
-          ].map((step, i) => (
-            <View key={i} style={styles.step}>
-              <View style={[styles.stepDot, step.done && styles.stepDotDone]} />
-              <Text style={[styles.stepText, step.done && styles.stepTextDone]}>
-                {step.label}
-              </Text>
-            </View>
+        {/* Animated pulse ring */}
+        <div style={{ position:'relative', width:100, height:100, marginBottom:32 }}>
+          {[1,2,3].map(i => (
+            <div key={i} style={{
+              position:'absolute', inset:0, borderRadius:'50%',
+              border:`2px solid ${roleColor}`,
+              opacity: 0.15 + i * 0.15,
+              animation: `pulse${i} ${1.5 + i * 0.4}s ease-in-out infinite`,
+              transform: `scale(${0.6 + i * 0.2})`,
+            }} />
           ))}
-        </View>
+          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:36 }}>
+            {user?.role === 'ngo' ? '🤝' : '🚴'}
+          </div>
+        </div>
 
-        <Text style={styles.note}>
-          This usually takes a few hours. We'll notify you when your account is approved.
-        </Text>
+        <div style={{ fontSize:24, fontWeight:800, fontFamily: T.display, color: roleColor, marginBottom:12 }}>
+          Pending Approval
+        </div>
 
-      </View>
+        <div style={{ color: T.muted, fontSize:14, lineHeight:1.7, maxWidth:300, marginBottom:32 }}>
+          Your <strong style={{ color: '#1C1A17' }}>{roleLabel}</strong> account has been submitted.
+          Our admin team will review your details and approve your access shortly.
+        </div>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Sign out</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        {/* Status card */}
+        <div style={{ background:'#FFFFFF', border:`1px solid ${roleColor}28`, borderRadius:16, padding:'20px 24px', width:'100%', maxWidth:320, marginBottom:32 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #F2F1EE' }}>
+            <span style={{ color: T.muted, fontSize:13 }}>Name</span>
+            <span style={{ color: T.text, fontSize:13, fontWeight:600 }}>{user?.name}</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #F2F1EE' }}>
+            <span style={{ color: T.muted, fontSize:13 }}>Email</span>
+            <span style={{ color: T.text, fontSize:13, fontWeight:600 }}>{user?.email}</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0' }}>
+            <span style={{ color: T.muted, fontSize:13 }}>Status</span>
+            <span style={{ color:'#D97706', fontSize:13, fontWeight:700 }}>⏳ Under Review</span>
+          </div>
+        </div>
+
+        <div style={{ color:'#4B4842', fontSize:12, marginBottom:32, maxWidth:280 }}>
+          You'll receive an email once your account is approved. This usually takes 24–48 hours.
+        </div>
+
+        <button
+          onClick={handleLogout}
+          style={{ padding:'10px 28px', background:'#FFFFFF', border:'1px solid #E3E0D9', borderRadius:10, color: T.muted, fontSize:13, cursor:'pointer', fontFamily: T.font }}
+        >
+          Sign out
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes pulse1 { 0%,100%{transform:scale(0.8);opacity:0.3} 50%{transform:scale(1.05);opacity:0.1} }
+        @keyframes pulse2 { 0%,100%{transform:scale(1.0);opacity:0.2} 50%{transform:scale(1.2);opacity:0.08} }
+        @keyframes pulse3 { 0%,100%{transform:scale(1.2);opacity:0.1} 50%{transform:scale(1.4);opacity:0.04} }
+      `}</style>
+    </PageScroll>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
-    paddingHorizontal: 32,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-  },
-  iconArea: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  outerRing: {
-    position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#FBBF2415',
-    borderWidth: 1,
-    borderColor: '#FBBF2433',
-  },
-  innerDot: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#FBBF2410',
-    borderWidth: 1,
-    borderColor: '#FBBF2455',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clockIcon: {
-    fontSize: 28,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#E5E5E5',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  roleHighlight: {
-    color: '#FBBF24',
-    fontWeight: '600',
-  },
-  steps: {
-    width: '100%',
-    backgroundColor: '#141414',
-    borderRadius: 16,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  stepDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#333',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  stepDotDone: {
-    backgroundColor: '#4ADE80',
-    borderColor: '#4ADE80',
-  },
-  stepText: {
-    fontSize: 13,
-    color: '#555',
-  },
-  stepTextDone: {
-    color: '#E5E5E5',
-  },
-  note: {
-    fontSize: 12,
-    color: '#444',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  logoutBtn: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#555',
-    fontSize: 14,
-  },
-});

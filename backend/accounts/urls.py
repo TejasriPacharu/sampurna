@@ -6,6 +6,7 @@ from .views import (
     NGOSignupView,
     DeliverySignupView,
     MyStatusView,
+    MeView,
     AdminUserListView,
     AdminUserDetailView,
     AdminUserApproveRejectView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('login/',          LoginView.as_view(),         name='login'),
     path('token/refresh/',  TokenRefreshView.as_view(),  name='token_refresh'),
     path('me/status/',      MyStatusView.as_view(),      name='my_status'),
+    path('me/',             MeView.as_view(),             name='me'),
 
     # ── Signup ────────────────────────────────
     path('signup/donor/',    DonorSignupView.as_view(),    name='signup_donor'),
